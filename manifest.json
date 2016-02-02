@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+
+  "name": "Down the Rabbit Hole",
+  "description": "Digs down for the nasty details of your ad units",
+  "version": "1.0",
+
+
+  "options_ui": {
+    "page": "options.html",
+    "chrome_style": true
+  },
+
+  "permissions": [
+    "http://*/",
+    "https://*/",
+    "tabs",
+    "activeTab",
+    "webNavigation",
+    "storage"
+  ],
+
+  "browser_action": {
+    "default_title": "Go down the rabbit hole to inspect ads"
+  },
+
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  }
+
+}

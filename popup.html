@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Down the Rabbit Hole</title>
+    <link rel="stylesheet" type="text/css" href="icon_styles.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="css_tree_styles.css" media="screen">
+    <style>
+      body {
+        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
+        font-size: 10pt;
+        min-width: 800px;
+        margin: 0;
+      }
+
+      h1 {
+        margin-top: 0px;
+        margin-bottom: 4px;
+      }
+
+      div.main-content {
+        margin: 8px;
+      }
+
+      div.header {
+        height: 40px;
+        border-bottom: 1px solid #666;
+      }
+
+      div.list {
+        height: 250px;
+        overflow: auto;
+      }
+
+      div.detail {
+        height: 280px;
+        width: 100%;
+        border-top: 1px solid #666;
+      }
+
+      div.detail-text {
+        height: 100%;
+        width: 550px;
+        float: left;
+        border-right: 1px solid #666;
+        overflow: auto;
+        padding: 8px;
+      }
+
+      div.detail-text table {
+        width: 500px;
+      }
+
+      div.detail-text table td {
+        vertical-align: top;
+      }
+
+      div.detail-image {
+        height: 200px;
+        width: 200px;
+        float: left;
+        padding: 8px;
+      }
+
+      img.detail-image {
+        max-height: 100%;
+        max-width: 100%;
+        border: none;
+      }
+
+      div.ad-el-tree {
+        display: none;
+      }
+      
+      div.ad-el-tree.selected {
+        display: block;
+      }
+
+      span.el-src-host {
+        color: #c00;
+        font-weight: bold;
+      }
+
+      div.header-left {
+        width: 50%;
+        float: left;
+      }
+
+      div.header-right {
+        height: 100%;
+        width: 50%;
+        float: right;
+        position: relative;
+      }
+
+      .ad-image {
+        font-weight: bold;
+        color: #3CAF3C;
+      }
+
+    </style>
+
+    <!--
+      - JavaScript and HTML must be in separate files: see our Content Security
+      - Policy documentation[1] for details and explanation.
+      -
+      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
+     -->
+    <script src="popup.js"></script>
+  </head>
+  <body>
+    <div> 
+    <div class="main-content">
+        <div id="div-header" class="header">
+            <div class="header-left">
+                <h1>DOWN THE RABBIT HOLE</h1>
+            </div>
+            <div class="header-right">
+                <div style="position: absolute; bottom: 0px">
+                    <strong>Select an ad unit:</strong> <span id="span-sel"></span></p>
+                </div>
+            </div>
+        </div>
+        <div id="div-list" class="list">
+            <img src="spinner.gif" style="width: 64px; height: 64px; margin: auto; display: block; margin-top: 96px;" />
+        </div>
+        <div id="div-detail" class="detail">
+            <div id="div-detail-text" class="detail-text">
+            </div>
+            <div id="div-detail-image" class="detail-image">
+                <img id="img-detail-image" class="detail-image" src="1x1.png" />
+            </div>
+            <div style="position: absolute; bottom: 4px; right: 4px;>
+                <a href="#" class="icon-settings" style="font-size: 32px;" id="go-to-options"></a>
+            </div>
+        </div>
+  </body>
+</html>
+
