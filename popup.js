@@ -14,6 +14,9 @@ var _frame_objects = {};
 var _last_highlighted_node = null;
 var _last_highlighted_node_bg = null;
 
+var _loaded = 0;
+var _performance_obj = {};
+
 function shorten (str, maxlen)
 {
     if (str.length <= maxlen)
@@ -25,7 +28,7 @@ function shorten (str, maxlen)
     return str.substring (0, halflen) + '...' + str.substring (str.length - halflen);
 }
 
-function parse_url (url) 
+function parse_url (url)
 {
     var parser = document.createElement('a'),
         searchObject = {},
@@ -117,8 +120,10 @@ function render_branch (o, depth)
         node_class += " ad-image";
     }
 
+    var timed = "";
+    if(o.startTime > 0) timed = Math.round(o.startTime + o.duration) + "ms to load"
     markup += '<li><label id="' + label_id + '" class="' + node_class + '">'
-        + caption
+        + caption + " " + timed
         + '</label><input type="checkbox" checked id="' + cb_id + '" />'
 
     if (o.children.length == 0)
@@ -148,7 +153,6 @@ function render_branch (o, depth)
     return markup;
 }
 
-
 function is_potential_ad_creative (o)
 {
     if (o.tagname === "img")
@@ -169,6 +173,17 @@ function is_potential_ad_creative (o)
     return false;
 }
 
+function add_longest_duration_to_parent (o)
+{
+  if(typeof o.parent !== "undefined"){
+    var parent = o.parent;
+    if((o.duration + o.startTime) > parent.duration + parent.startTime){
+      parent.startTime = o.startTime;
+      parent.duration = o.duration;
+      add_longest_duration_to_parent (parent);
+    }
+  }
+}
 
 function is_beacon (o)
 {
@@ -183,6 +198,24 @@ function is_beacon (o)
     // @TODO: what about invisible images?
 
     return false;
+}
+
+function gather_scripts_performance(objects){
+  for (var k = 0; k < Object.keys(objects).length; k++){
+    var object = objects[Object.keys(objects)[k]];
+
+    if(object.tagname === "iframe" || object.tagname === "script" || object.tagname === "img" ){
+      _performance_obj[object.src] = {
+        "duration" : object.duration,
+        "startTime": object.startTime
+      };
+    }
+
+    if(typeof object.children === "undefined") continue;
+    if(object.children.length <= 0) continue;
+
+    gather_scripts_performance(object.children);
+  }
 }
 
 function analyze_branch (o, depth, network_path)
@@ -200,13 +233,16 @@ function analyze_branch (o, depth, network_path)
     o.domain = ''
     if (o.src)
     {
-        //console.log ("[analyze_branch] o.src: " + o.src);
         o.src_hostname = extract_hostname (o.src);
-        //console.log ("[analyze_branch] o.src_hostname: " + o.src_hostname);
         if (o.src_hostname)
         {
             o.domain = extract_domain (o.src_hostname);
-            //console.log ("[analyze_branch] o.domain: " + o.domain);
+        }
+
+        if ( typeof _performance_obj[o.src] !== "undefined"){
+          o.duration = _performance_obj[o.src].duration;
+          o.startTime = _performance_obj[o.src].startTime;
+          add_longest_duration_to_parent (o)
         }
     }
     if (o.background_image)
@@ -236,7 +272,6 @@ function analyze_branch (o, depth, network_path)
         }
 
         o.network_path = network_path.join (', ');
-        //console.log ("[analyze_branch] network_path: " + o.network_path);
     }
 
     o.stats = {
@@ -245,7 +280,9 @@ function analyze_branch (o, depth, network_path)
             iframes: 0,
             iframes_offsite: 0,
             images: 0,
-            beacons: 0
+            beacons: 0,
+            startTime: 0,
+            duration: 0,
     };
 
     if (o.tagname === 'script')
@@ -307,16 +344,17 @@ function analyze_branch (o, depth, network_path)
 
 function merge_branch (o)
 {
-    if ((o.tagname === 'iframe') && o.iframe_denied)
+    if ((o.tagname === 'iframe'))
     {
+
         if (typeof _frame_objects[o.src] !== 'undefined')
         {
-            console.log ("[merge_branch] attaching iframe contents using src=" + o.src);
+            // console.log ("[merge_branch] attaching iframe contents using src=" + o.src);
             o.children = [ _frame_objects[o.src] ];
         }
         else
         {
-            console.log ("[merge_branch] could not find iframe contents matching src=" + o.src);
+            // console.log ("[merge_branch] could not find iframe contents matching src=" + o.src);
             return;
         }
     }
@@ -329,9 +367,12 @@ function merge_branch (o)
 
 function postprocess_trees ()
 {
+    gather_scripts_performance(_frame_objects);
+
     for (var i = 0 ; i < _ad_objects.length; i++)
     {
         var ad_obj = _ad_objects[i];
+        ad_obj.timer = 0;
         merge_branch (ad_obj);
         analyze_branch (ad_obj);
     }
@@ -361,7 +402,7 @@ function add_events ()
                 }
 
                 // scroll to and highlight the ad element
-                chrome.tabs.sendMessage(_curr_tab_id, 
+                chrome.tabs.sendMessage(_curr_tab_id,
                     { text: "scroll_into_view", idx: i },
                     { frameId: _root_frame_id });
             }
@@ -372,7 +413,7 @@ function add_events ()
         }
 
     });
-    
+
     document.onclick = function(e) {
         var el = e.target;
         if (!el.className.match (/tree-node/)) {
@@ -386,8 +427,9 @@ function add_events ()
         _last_highlighted_node = el;
         _last_highlighted_node_bg = el.style.backgroundColor;
         el.style.backgroundColor = '#88caf3';
-        
+
         var o = _node_data[el.id];
+
         var markup = "<table>\n<tr><td width=\"120\"><strong>tag</strong></td><td>" + o.tagname + "</td></tr>\n";
 
         if (o.id)
@@ -513,35 +555,52 @@ function add_events ()
         {
             stats.push ("beacons: " + o.stats.beacons);
         }
+        if (o.startTime > 0){
+          stats.push ("start time: " + o.startTime);
+        }
+        if (o.duration > 0){
+          stats.push ("duration: " + o.duration);
+        }
 
         if (stats.length > 0)
         {
-            markup += "<tr><td><strong>stats</strong></td><td>" 
+            markup += "<tr><td><strong>stats</strong></td><td>"
                 + stats.join ("<br />\n")
                 + "</td></tr>\n";
-            
         }
 
         markup += "</table>\n";
 
         var div = document.getElementById('div-detail-text');
         div.innerHTML = markup;
-        
+
+        var aTags = document.getElementsByTagName('a');
+        for(i = 0; i < aTags.length; i++){
+          aTags[i].addEventListener('click', function(event){
+            event.preventDefault();
+            chrome.windows.create({"url":enc_url})
+          });
+        }
+
     };
 }
 
 function render ()
 {
+    if(typeof _ad_objects === 'undefined') return false;
     // merge in the iframe information and analyze the trees
     postprocess_trees ();
 
     var div_list = document.getElementById('div-list');
     var span_sel = document.getElementById('span-sel');
-
     if (_ad_objects.length == 0)
     {
         div_list.innerHTML = "<p>no ad elements found</p></div></div>\n";
         return;
+    }
+
+    if (_ad_objects.timer !== 0){
+      console.log(_ad_objects);
     }
 
     var tree_markup = '';
@@ -569,26 +628,12 @@ function render ()
 }
 
 
-function scan_frame_callback (el) 
+function scan_frame_callback (el)
 {
     _num_callbacks_received++;
     if (typeof el !== 'undefined')
     {
-        console.log ('[scan_frame_callback] callback ' + _num_callbacks_received
-            + "/" + _num_callbacks_expected + ' (url: ' + el.frame.url + ")");
-
-        _frame_objects[el.frame.url] = el;
-
-        // sometimes the iframe's source might be "//foo.com/blah", but the
-        // scan_frame callback will call it "http://foo.com/blah".  So let's
-        // strip out the http[s]: at the beginning and test again.
-        var short_url = el.frame.url.replace (/^[a-z]+:\/\//, '//');
-        _frame_objects[short_url] = el;
-    }
-    else
-    {
-        console.log ('[scan_frame_callback] callback ' + _num_callbacks_received
-            + "/" + _num_callbacks_expected + ' (undefined el)');
+        _frame_objects[el.frame.frameId] = el;
     }
 
     if (_num_callbacks_received == _num_callbacks_expected)
@@ -597,12 +642,12 @@ function scan_frame_callback (el)
     }
 }
 
-function scan_page_callback (ad_objects) 
+function scan_page_callback (ad_objects)
 {
     _num_callbacks_received++;
 
-    console.log ('[scan_page_callback] callback ' + _num_callbacks_received
-        + "/" + _num_callbacks_expected + '...');
+    // console.log ('[scan_page_callback] callback ' + _num_callbacks_received
+    //    + "/" + _num_callbacks_expected + '...');
 
     _ad_objects = ad_objects;
 
@@ -627,7 +672,7 @@ function on_content_script_executed ()
             if (frame.parentFrameId === -1)
             {
                 _root_frame_id = frame.frameId;
-                message_details.push ({ 
+                message_details.push ({
                     text: 'scan_page',
                     frameId: frame.frameId,
                     parentFrameId: frame.parentFrameId,
@@ -637,7 +682,7 @@ function on_content_script_executed ()
             }
             else
             {
-                message_details.push ({ 
+                message_details.push ({
                     text: 'scan_frame',
                     frameId: frame.frameId,
                     parentFrameId: frame.parentFrameId,
@@ -656,12 +701,11 @@ function on_content_script_executed ()
             {
                 callback = scan_frame_callback;
             }
-            else 
+            else
             {
                 callback = scan_page_callback;
             }
 
-            //console.log ("sending message" + JSON.stringify(deets));
             chrome.tabs.sendMessage(_curr_tab_id, deets,
                 { frameId: deets.frameId }, callback);
         }
@@ -670,20 +714,24 @@ function on_content_script_executed ()
 
 chrome.runtime.onMessage.addListener(function (request, sender, callback) {
     // If the received message has the expected format...
-    switch (request.text)
-    {
-        case 'start':
-            console.log ("start message received...");
-            _curr_tab_id = request.tab_id;
+    if(_loaded != 1){
+      switch (request.text)
+      {
+          case 'start':
+              // console.log ("start message received...");
+              _curr_tab_id = request.tab_id;
 
-            chrome.storage.sync.get({
-                css_selector: "[id*='my-ad-idbase-']"
-              }, function(items) {
-                _css_selector = items.css_selector;
-                on_content_script_executed ();
-            });
+              chrome.storage.sync.get({
+                  css_selector: "[id*='my-ad-idbase-']"
+                }, function(items) {
+                  //  console.info(items);
+                  _css_selector = items.css_selector;
+                  on_content_script_executed ();
+                  _loaded = 1;
+              });
 
-            break;
+              break;
+      }
     }
 });
 

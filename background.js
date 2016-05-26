@@ -11,11 +11,10 @@ chrome.browserAction.onClicked.addListener(function() {
             url: 'popup.html',
             type: 'panel',
             width: 800,
-            height: 600
+            height: 650
         },
         function (window) {
             start ();
-
             _popup_tab_id = window.tabs[0].id;
         });
     });
@@ -37,4 +36,3 @@ function start ()
     // D'oh -- calling executeScript with allFrames doesn't call the callback!
     setTimeout (on_content_script_executed, 3000);
 }
-

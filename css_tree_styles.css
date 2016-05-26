@@ -4,9 +4,9 @@ ol.tree
 	padding: 0 0 0 30px;
 }
 
-	li 
-	{ 
-		position: relative; 
+	li
+	{
+		position: relative;
 		margin-left: -15px;
 		list-style: none;
 	}
