@@ -10,6 +10,7 @@
         font-size: 10pt;
         min-width: 800px;
         margin: 0;
+        white-space: nowrap;
       }
 
       h1 {
@@ -28,8 +29,8 @@
       }
 
       div.list {
-        height: 250px;
         overflow: auto;
+        height: 270px;
       }
 
       div.detail {
@@ -40,7 +41,7 @@
 
       div.detail-text {
         height: 100%;
-        width: 550px;
+        width: 450px;
         float: left;
         border-right: 1px solid #666;
         overflow: auto;
@@ -56,10 +57,11 @@
       }
 
       div.detail-image {
-        height: 200px;
-        width: 200px;
+        height: 270px;
+        width: 300px;
         float: left;
         padding: 8px;
+        overflow: auto;
       }
 
       img.detail-image {
@@ -100,11 +102,21 @@
       }
 
       div.perf-bar {
-
+        margin: 2px 0px 0px 0px;
       }
 
       div.perf-bar > span {
-        
+        line-height: 2em;
+        display: inline-block;
+        padding-left: 10px;
+        cursor: pointer;
+      }
+
+      div.perf-bar >span:first-child {
+        background-color: #4ecb35;
+        text-transform: capitalize;;
+        color: #000000;
+        width: 75%;
       }
 
     </style>
@@ -125,9 +137,10 @@
                 <h1>DOWN THE RABBIT HOLE</h1>
             </div>
             <div class="header-right">
-                <div>
+              <a href="#" class="icon-settings" style="font-size: 32px;" id="go-to-options"></a>
+                <!-- <div>
                     <strong>Select an ad unit:</strong> <span id="span-sel"></span>
-                </div>
+                </div> -->
             </div>
         </div>
         <div id="div-list" class="list">
@@ -139,10 +152,9 @@
             <div id="div-detail-image" class="detail-image">
                 <img id="img-detail-image" class="detail-image" src="1x1.png" />
             </div>
-            <div style="position: absolute; bottom: 4px; right: 4px;">
-                <a href="#" class="icon-settings" style="font-size: 32px;" id="go-to-options"></a>
-            </div>
+            <!-- <div style="position: absolute; bottom: 4px; right: 4px;">
+
+            </div> -->
         </div>
-        <div id="div-timer" class="timer"></div>
   </body>
 </html>

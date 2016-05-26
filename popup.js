@@ -16,6 +16,7 @@ var _last_highlighted_node_bg = null;
 
 var _loaded = 0;
 var _performance_obj = {};
+var _longest_duration = 0;
 
 function shorten (str, maxlen)
 {
@@ -121,7 +122,7 @@ function render_branch (o, depth)
     }
 
     var timed = "";
-    if(o.startTime > 0) timed = Math.round(o.startTime + o.duration) + "ms to load"
+    if(o.startTime > 0) timed = "<h4 style='display:inline-block'>" + Math.round(o.startTime + o.duration) + "ms to load"+ "</h4>"
     markup += '<li><label id="' + label_id + '" class="' + node_class + '">'
         + caption + " " + timed
         + '</label><input type="checkbox" checked id="' + cb_id + '" />'
@@ -380,9 +381,9 @@ function postprocess_trees ()
 
 function add_events ()
 {
-    var sel = document.getElementById('ad-el-selector');
+    var sel = document.getElementById('div-list');
 
-    sel.addEventListener ('change', function (e) {
+    sel.addEventListener ('click', function (e) {
 
         // show the appropriate tree...
         for (var i = 0; i < _ad_objects.length; i++)
@@ -391,9 +392,14 @@ function add_events ()
 
             var i1 = i + 1;
             var div = document.getElementById('ad-el-' + i1);
-            if (i1 == e.target.value)
+
+            if(typeof e.target.id === "undefined") e.target.id = 0;
+
+            if (i1 == e.target.id)
             {
                 div.className = "ad-el-tree selected";
+                document.getElementById(i1).style.lineHeight = "4em";
+                console.log(div);
 
                 var label_elements = div.getElementsByTagName ('label');
                 if (label_elements.length > 0)
@@ -401,7 +407,6 @@ function add_events ()
                     label_elements[0].click ();
                 }
 
-                // scroll to and highlight the ad element
                 chrome.tabs.sendMessage(_curr_tab_id,
                     { text: "scroll_into_view", idx: i },
                     { frameId: _root_frame_id });
@@ -409,6 +414,7 @@ function add_events ()
             else
             {
                 div.className = "ad-el-tree";
+                document.getElementById(i1).style.lineHeight = "2em";
             }
         }
 
@@ -571,8 +577,8 @@ function add_events ()
 
         markup += "</table>\n";
 
-        var div = document.getElementById('div-detail-text');
-        div.innerHTML = markup;
+        var div = document.getElementById('div-detail-image');
+        div.innerHTML += markup;
 
         var aTags = document.getElementsByTagName('a');
         for(i = 0; i < aTags.length; i++){
@@ -583,6 +589,7 @@ function add_events ()
         }
 
     };
+
 }
 
 function render ()
@@ -592,6 +599,7 @@ function render ()
     postprocess_trees ();
 
     var div_list = document.getElementById('div-list');
+    var div_text = document.getElementById('div-detail-text');
     var span_sel = document.getElementById('span-sel');
     if (_ad_objects.length == 0)
     {
@@ -599,34 +607,68 @@ function render ()
         return;
     }
 
-    if (_ad_objects.timer !== 0){
-      console.log(_ad_objects);
-    }
+    div_list.innerHTML = "";
 
     var tree_markup = '';
     var dropdown_markup = "<select id=\"ad-el-selector\">\n<option value=\"0\"></option>\n";
+    var css_selector = _css_selector.replace(/(\[id\*=')|('])/g,'');
 
     _nodecount = 0;
     _node_data = [];
+
     for (var i = 0; i < _ad_objects.length; i++)
     {
         var ad_obj = _ad_objects[i];
+        var timer = (ad_obj.duration + ad_obj.startTime);
         var i1 = i + 1;
+        div_list.innerHTML += '<div class="perf-bar" ><span id="' + i1 + '" >'
+          + ad_obj.id.replace(css_selector,'')
+          + ' ' + Math.round(timer) + 'ms'
+          + '</span><span style="display: none" >'
+          + Math.round(timer)
+          + 'ms</span></div>';
 
-        dropdown_markup += '<option value="' + i1 + '">' + ad_obj.id + "</option>\n";
+        if(timer > _longest_duration) _longest_duration = timer;
+        // dropdown_markup += '<option value="' + i1 + '">' + ad_obj.id + "</option>\n";
         tree_markup += '<div class="ad-el-tree" id="ad-el-' + i1 + '"><ol class="tree">';
-
         tree_markup += render_branch (ad_obj);
         tree_markup += '</ol></div>';
     }
-    dropdown_markup += "</select>\n";
+    // dropdown_markup += "</select>\n";
 
-    span_sel.innerHTML = dropdown_markup;
-    div_list.innerHTML = tree_markup;
-
+    //span_sel.innerHTML = dropdown_markup;
+    div_text.innerHTML = tree_markup;
+    post_render()
     add_events ();
 }
 
+function post_render(){
+  var perf_bars = document.getElementsByClassName('perf-bar');
+  var max_width = "790px";
+
+  for(var i = 0; i < perf_bars.length; i++){
+    var perf_bar = perf_bars[i];
+    var timer = parseInt(perf_bar.children[1].innerHTML);
+
+    if(timer == 0){
+      perf_bar.children[0].style.width = max_width;
+      perf_bar.children[0].style.backgroundColor = "#ebebeb";
+      perf_bar.removeChild(perf_bar.children[1]);
+      continue;
+    }
+
+    var calculated_length = Math.floor((timer * 790) / (_longest_duration + 1000));
+    perf_bar.children[0].style.width = calculated_length + "px";
+
+    if (timer > 4000){
+      perf_bar.children[0].style.backgroundColor = "#cb3535";
+    }
+    else if (timer > 2000){
+      perf_bar.children[0].style.backgroundColor = "#fdae61";
+    }
+
+  }
+}
 
 function scan_frame_callback (el)
 {
