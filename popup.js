@@ -577,8 +577,8 @@ function add_events ()
 
         markup += "</table>\n";
 
-        var div = document.getElementById('div-detail-image');
-        div.innerHTML += markup;
+        var div = document.getElementById('div-detail-desc');
+        div.innerHTML = markup;
 
         var aTags = document.getElementsByTagName('a');
         for(i = 0; i < aTags.length; i++){
