@@ -1,15 +1,41 @@
+/* Just some base styles not needed for example to function */
+body, form, ul, li, p, h1, h2, h3, h4, h5
+{
+	margin: 0;
+	padding: 0;
+}
+img { border: none; }
+p
+{
+	font-size: 1em;
+	margin: 0 0 1em 0;
+}
+
+
 /* CSS Tree menu styles */
 ol.tree
 {
 	padding: 0 0 0 30px;
+	width: 300px;
 }
-
 	li
 	{
 		position: relative;
 		margin-left: -15px;
 		list-style: none;
 	}
+	li.file
+	{
+		margin-left: -1px !important;
+	}
+		li.file a
+		{
+			background: url(document.png) 0 0 no-repeat;
+			color: #fff;
+			padding-left: 21px;
+			text-decoration: none;
+			display: block;
+		}
 	li input
 	{
 		position: absolute;
@@ -25,22 +51,22 @@ ol.tree
 		li input + ol
 		{
 			background: url(toggle-small-expand.png) 40px 0 no-repeat;
-			margin: -1.338em 0 0 -44px; /* 15px */
+			margin: -0.938em 0 0 -44px; /* 15px */
 			height: 1em;
 		}
 		li input + ol > li { display: none; margin-left: -14px !important; padding-left: 1px; }
 	li label
 	{
-		/* background: url(folder-horizontal.png) 15px 1px no-repeat; */
+		background: url(folder-horizontal.png) 15px 1px no-repeat;
 		cursor: pointer;
-		display: block;
-		padding-left: 10px;
+		display: inline-block;
+		padding-left: 7px;
 	}
 
 	li input:checked + ol
 	{
 		background: url(toggle-small.png) 40px 5px no-repeat;
-		margin: -1.75em 0 0 -44px; /* 20px */
+		margin: -1.25em 0 0 -44px; /* 20px */
 		padding: 1.563em 0 0 80px;
 		height: auto;
 	}

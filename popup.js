@@ -10,6 +10,7 @@ var _node_data = [];
 
 var _ad_objects = 0;
 var _frame_objects = {};
+var _frame_objects_sub = {};
 
 var _last_highlighted_node = null;
 var _last_highlighted_node_bg = null;
@@ -17,6 +18,7 @@ var _last_highlighted_node_bg = null;
 var _loaded = 0;
 var _performance_obj = {};
 var _longest_duration = 0;
+var _load_page_start = null;
 
 function shorten (str, maxlen)
 {
@@ -122,8 +124,13 @@ function render_branch (o, depth)
     }
 
     var timed = "";
-    if(o.startTime > 0) timed = "<h4 style='display:inline-block'>" + Math.round(o.startTime + o.duration) + "ms to load"+ "</h4>"
-    markup += '<li><label id="' + label_id + '" class="' + node_class + '">'
+    if(o.startTime > 0){
+      timed = "<h4 style='display:inline-block'>"
+      + Math.round(o.startTime + (o.loadStart - _load_page_start) + o.duration)
+      + "ms to load"
+      + "</h4>"
+    }
+    markup += '<li><label id="' + label_id + '" class="' + node_class + '" for="' + cb_id +'">'
         + caption + " " + timed
         + '</label><input type="checkbox" checked id="' + cb_id + '" />'
 
@@ -178,6 +185,13 @@ function add_longest_duration_to_parent (o)
 {
   if(typeof o.parent !== "undefined"){
     var parent = o.parent;
+
+    if( typeof parent.loadStart === "undefined"
+        || (typeof parent.loadStart !== "undefined" && +parent.loadStart < +o.loadStart)
+    ){
+      parent.loadStart = o.loadStart;
+    }
+
     if((o.duration + o.startTime) > parent.duration + parent.startTime){
       parent.startTime = o.startTime;
       parent.duration = o.duration;
@@ -202,13 +216,16 @@ function is_beacon (o)
 }
 
 function gather_scripts_performance(objects){
-  for (var k = 0; k < Object.keys(objects).length; k++){
-    var object = objects[Object.keys(objects)[k]];
+  var n = Object.keys(objects);
+
+  for (var k = 0; k < n.length; k++){
+    var object = objects[n[k]];
 
     if(object.tagname === "iframe" || object.tagname === "script" || object.tagname === "img" ){
       _performance_obj[object.src] = {
         "duration" : object.duration,
-        "startTime": object.startTime
+        "startTime": object.startTime,
+        "loadStart": object.loadStart,
       };
     }
 
@@ -243,6 +260,7 @@ function analyze_branch (o, depth, network_path)
         if ( typeof _performance_obj[o.src] !== "undefined"){
           o.duration = _performance_obj[o.src].duration;
           o.startTime = _performance_obj[o.src].startTime;
+          o.loadStart = _performance_obj[o.src].loadStart;
           add_longest_duration_to_parent (o)
         }
     }
@@ -284,6 +302,7 @@ function analyze_branch (o, depth, network_path)
             beacons: 0,
             startTime: 0,
             duration: 0,
+            loadStart: 0,
     };
 
     if (o.tagname === 'script')
@@ -345,18 +364,15 @@ function analyze_branch (o, depth, network_path)
 
 function merge_branch (o)
 {
-    if ((o.tagname === 'iframe'))
+    if (o.tagname === 'iframe')
     {
+        if (typeof _frame_objects_sub[o.src] !== 'undefined')
+        {
+            o.children = [ _frame_objects_sub[o.src] ];
 
-        if (typeof _frame_objects[o.src] !== 'undefined')
-        {
-            // console.log ("[merge_branch] attaching iframe contents using src=" + o.src);
-            o.children = [ _frame_objects[o.src] ];
-        }
-        else
-        {
-            // console.log ("[merge_branch] could not find iframe contents matching src=" + o.src);
-            return;
+            for(var i = 0; i < o.children.length; i++){
+              o.children[i].parent = o;
+            }
         }
     }
 
@@ -366,8 +382,28 @@ function merge_branch (o)
     }
 }
 
+function get_children_frame_objects ()
+{
+    var n = Object.keys(_frame_objects);
+
+    for (var k = 0; k < n.length; k++)
+    {
+      var frame = _frame_objects[n[k]];
+
+      if(typeof frame === "undefined") continue;
+      if(typeof frame.frame === "undefined") continue;
+      if(frame.frame.parentFrameId === 0) continue;
+      if(frame.frame.url === "about:blank" || typeof frame.frame.url === "undefined") continue;
+      if(typeof _frame_objects_sub[frame.frame.url] !== "undefined") continue;
+      // if(typeof _frame_objects_sub[frame.frame.url] === "undefined" && _frame_objects_sub[frame.frame.url].children.length <= 0) continue;
+
+      _frame_objects_sub[frame.frame.url] = frame;
+    }
+}
+
 function postprocess_trees ()
 {
+    get_children_frame_objects();
     gather_scripts_performance(_frame_objects);
 
     for (var i = 0 ; i < _ad_objects.length; i++)
@@ -385,6 +421,9 @@ function add_events ()
 
     sel.addEventListener ('click', function (e) {
 
+        var child = document.getElementById("selected-tree-marker");
+        if(child != null) child.parentElement.removeChild(child);
+
         // show the appropriate tree...
         for (var i = 0; i < _ad_objects.length; i++)
         {
@@ -398,8 +437,8 @@ function add_events ()
             if (i1 == e.target.id)
             {
                 div.className = "ad-el-tree selected";
-                document.getElementById(i1).style.lineHeight = "4em";
-                console.log(div);
+                console.log(document.getElementById(i1).parentElement);
+                document.getElementById(i1).parentElement.innerHTML += "<span id='selected-tree-marker'><img src='/icon16.png' style='width:1em; height:1em; -webkit-transform: scaleX(-1); transform: scaleX(-1); filter: FlipH;'></span>";
 
                 var label_elements = div.getElementsByTagName ('label');
                 if (label_elements.length > 0)
@@ -414,7 +453,6 @@ function add_events ()
             else
             {
                 div.className = "ad-el-tree";
-                document.getElementById(i1).style.lineHeight = "2em";
             }
         }
 
@@ -432,7 +470,7 @@ function add_events ()
         }
         _last_highlighted_node = el;
         _last_highlighted_node_bg = el.style.backgroundColor;
-        el.style.backgroundColor = '#88caf3';
+        el.style.backgroundColor = 'rgba(136, 202, 244, 0.6)';
 
         var o = _node_data[el.id];
 
@@ -453,7 +491,7 @@ function add_events ()
             markup += "<tr><td><strong>backgroundImage:</strong></td><td>" + o.background_image + "</td></tr>\n";
             var bg = o.background_image;
             bg = bg.replace(/^url\("(.*)"\)$/,'$1');
-            bg = bg.substring(bg.indexOf("images") > -1 ? bg.indexOf("images") : 0);
+            // bg = bg.substring(bg.indexOf("images") > -1 ? bg.indexOf("images") : 0);
             img_src = bg;
         }
 
@@ -561,11 +599,14 @@ function add_events ()
         {
             stats.push ("beacons: " + o.stats.beacons);
         }
-        if (o.startTime > 0){
-          stats.push ("start time: " + o.startTime);
+        // if (o.duration > 0){
+        //   stats.push ("duration: " + Math.round(o.startTime + o.duration) + "ms");
+        // }
+        if (o.loadStart > 0){
+          stats.push ("start time: " + toFullLocaleTimeString(o.loadStart) + "");
         }
-        if (o.duration > 0){
-          stats.push ("duration: " + o.duration);
+        if (o.startTime > 0){
+          stats.push ("total load time: " + Math.round(o.startTime + (o.loadStart - _load_page_start) + o.duration) + "ms");
         }
 
         if (stats.length > 0)
@@ -590,6 +631,15 @@ function add_events ()
 
     };
 
+}
+
+function toFullLocaleTimeString(d){
+  var date = new Date(d);
+  return pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds()) + "." + date.getMilliseconds();
+}
+
+function pad(n) {
+    return (n < 10) ? ("0" + n) : n;
 }
 
 function render ()
@@ -619,7 +669,8 @@ function render ()
     for (var i = 0; i < _ad_objects.length; i++)
     {
         var ad_obj = _ad_objects[i];
-        var timer = (ad_obj.duration + ad_obj.startTime);
+        var timer = (ad_obj.startTime + ad_obj.duration);
+        var timer = timer !== 0 ? timer + (ad_obj.loadStart - _load_page_start) : 0;
         var i1 = i + 1;
         div_list.innerHTML += '<div class="perf-bar" ><span id="' + i1 + '" >'
           + ad_obj.id.replace(css_selector,'')
@@ -772,13 +823,25 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
                   _loaded = 1;
               });
 
+              chrome.tabs.executeScript(
+                _curr_tab_id,
+                {code: 'var x = performance.timing.navigationStart; x'},
+                function(r){
+                  _load_page_start = r[0];
+
+                  var s = new Date(_load_page_start)
+                  document.getElementById('load_page_start').innerHTML = "Navigation Start Time: " + toFullLocaleTimeString(s);
+                }
+              );
+
               break;
       }
     }
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelector('#go-to-options').addEventListener('click', function() {
+    document.querySelector('#go-to-options').addEventListener('click', function(event) {
+        event.preventDefault();
         if (chrome.runtime.openOptionsPage) {
             // New way to open options pages, if supported (Chrome 42+).
             chrome.runtime.openOptionsPage();
@@ -787,4 +850,5 @@ document.addEventListener('DOMContentLoaded', function() {
             window.open(chrome.runtime.getURL('options.html'));
         }
     });
+
 });

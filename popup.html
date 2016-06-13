@@ -5,9 +5,9 @@
     <link rel="stylesheet" type="text/css" href="icon_styles.css" media="screen">
     <link rel="stylesheet" type="text/css" href="css_tree_styles.css" media="screen">
     <style>
+      *, html { font-family: Verdana, Arial, Helvetica, sans-serif; }
       body {
-        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
-        font-size: 10pt;
+        font-size: 9pt;
         min-width: 800px;
         margin: 0;
         white-space: nowrap;
@@ -46,10 +46,11 @@
         border-right: 1px solid #666;
         overflow: auto;
         padding: 8px;
+        font-size: 8pt;
       }
 
       div.detail-text table {
-        width: 500px;
+        width: 300px;
       }
 
       div.detail-text table td {
@@ -68,6 +69,19 @@
         max-height: 100%;
         max-width: 100%;
         border: none;
+        margin: 5px;
+      }
+
+      div#load_page_start {
+        display: inline-block;
+        margin-right: 20px;
+      }
+
+      div#div-detail-desc td {
+        vertical-align: top;
+      }
+      div#div-detail-desc strong {
+        text-transform: uppercase;
       }
 
       div.timer {
@@ -94,6 +108,12 @@
 
       div.header-right {
         height: 100%;
+        text-align: right;
+      }
+
+      div.header-right a, div.header-right a:visited, div.header-right a:hover{
+        color: black;
+        text-decoration: none;
       }
 
       .ad-image {
@@ -119,6 +139,7 @@
         width: 75%;
       }
 
+
     </style>
 
     <!--
@@ -137,6 +158,7 @@
                 <h1>DOWN THE RABBIT HOLE</h1>
             </div>
             <div class="header-right">
+              <div id="load_page_start" ></div>
               <a href="#" class="icon-settings" style="font-size: 32px;" id="go-to-options"></a>
                 <!-- <div>
                     <strong>Select an ad unit:</strong> <span id="span-sel"></span>
@@ -151,7 +173,7 @@
             </div>
             <div id="div-detail-image" class="detail-image">
                 <img id="img-detail-image" class="detail-image" src="1x1.png" />
-                <div id="div-detail-desc" class="detail-text">
+                <div id="div-detail-desc">
                 </div>
             </div>
             <!-- <div style="position: absolute; bottom: 4px; right: 4px;">

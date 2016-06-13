@@ -8,6 +8,7 @@ var _last_highlighted_el_border = '';
 var _ad_elements = [];
 var _performance_obj = [];
 var _loaded = 0;
+var _time_start = 0;
 
 function check_iframe_access (iframe)
 {
@@ -181,23 +182,19 @@ function descend (el, o, depth, page)
             if ( entry ) {
                 o2.duration = entry.duration;
                 o2.startTime = entry.startTime === 0 ? entry.fetchStart : entry.startTime;
-                // _performance_obj[url] = {
-                //   "duration": o2.duration,
-                //   "startTime": o2.startTime
-                // };
-
-                if(o.id == "aw0"){
-                  console.log(o2);
-                  console.log(keep_child);
-                  console.log(page);
-                  // console.info(_performance_obj);
-                }
+                o2.loadStart = performance.timing.loadEventStart !== "undefined"? performance.timing.loadEventStart : 0;
             }
         }
 
         if (child.style && child.style.backgroundImage)
         {
-            o2.background_image = child.style.backgroundImage;
+            var backgroundImageFull = child.style.backgroundImage.replace("/\/\//i","http://");
+            o2.background_image = backgroundImageFull;
+        }
+        else if(window.getComputedStyle(child,null) && window.getComputedStyle(child,null).backgroundImage !== "none")
+        {
+            var backgroundImageFull = window.getComputedStyle(child,null).backgroundImage;
+            o2.background_image = backgroundImageFull;
         }
 
         //descend_log (o2, depth);
@@ -218,6 +215,11 @@ function scan_page (request, callback)
 {
   console.log("scanning page...");
   var ad_objects = [];
+
+  setTimeout(function(){
+    var t = performance.timing;
+    console.log(t);
+  }, 0);
 
   _ad_elements = document.querySelectorAll (request.selector);
 
@@ -310,5 +312,4 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
             scroll_into_view (request);
             break;
     }
-
 });
