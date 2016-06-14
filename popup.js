@@ -124,10 +124,10 @@ function render_branch (o, depth)
     }
 
     var timed = "";
-    if(o.startTime > 0){
+    if(Math.round((o.loadStart - _load_page_start) + o.duration) > 0){
       timed = "<h4 style='display:inline-block'>"
-      + Math.round(o.startTime + (o.loadStart - _load_page_start) + o.duration)
-      + "ms to load"
+      + Math.round((o.loadStart - _load_page_start) + o.duration)
+      + "ms"
       + "</h4>"
     }
     markup += '<li><label id="' + label_id + '" class="' + node_class + '" for="' + cb_id +'">'
@@ -604,9 +604,9 @@ function add_events ()
         // }
         if (o.loadStart > 0){
           stats.push ("start time: " + toFullLocaleTimeString(o.loadStart) + "");
-        }
-        if (o.startTime > 0){
-          stats.push ("total load time: " + Math.round(o.startTime + (o.loadStart - _load_page_start) + o.duration) + "ms");
+          stats.push ("end time: " + toFullLocaleTimeString(o.loadStart + o.duration) +"");
+          stats.push ("Time (rel): " + Math.round(o.duration) + "ms");
+          stats.push ("Time (abs): " + Math.round((o.loadStart - _load_page_start) + o.duration) + "ms");
         }
 
         if (stats.length > 0)
@@ -692,6 +692,20 @@ function render ()
     post_render()
     add_events ();
 }
+
+// function return_checked_image(path){
+//     var test_element = document.createElement('img');
+//     test_element.onError = function(){
+//         return null;
+//     }
+//
+//     test_element.src = path;
+//     return path;
+// }
+//
+// function image_element_error(el, k){
+//     return null;
+// }
 
 function post_render(){
   var perf_bars = document.getElementsByClassName('perf-bar');

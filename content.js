@@ -180,11 +180,16 @@ function descend (el, o, depth, page)
         if ( url != "" ) {
             var entry = performance.getEntriesByName(url)[0];
             if ( entry ) {
+                // o2.duration = entry.duration;
+                // o2.startTime = typeof entry.fetchStart !== "undefined"? entry.fetchStart : 0;
+                // o2.loadStart = typeof performance.timing.loadEventStart !== "undefined"? performance.timing.loadEventStart : 0;
+
                 o2.duration = entry.duration;
-                o2.startTime = entry.startTime === 0 ? entry.fetchStart : entry.startTime;
-                o2.loadStart = performance.timing.loadEventStart !== "undefined"? performance.timing.loadEventStart : 0;
+                o2.loadStart = performance.timing.loadEventStart + entry.fetchStart;
             }
         }
+
+        o2.parent_window_url = document.location.href;
 
         if (child.style && child.style.backgroundImage)
         {
