@@ -15,38 +15,52 @@
       }
 
       h1 {
-        margin: 0px 0px 0px 10px;
+        margin: 0px 0px 0px 0px;
         font-family: sans-serif;
+        font-weight: 100;
+        display: inline-block;
+      }
+
+      #rabbithole-icon {
+        width: 30px;
+        opacity: .85;
       }
 
       div.main-content {
-
+          display: flex;
+          flex-direction: column;
+          min-height: 600px;
       }
 
       div.header {
-        background-color: #ddd;
+        background-color: #e0e0e0;
         color: #000;
+        height: 8%;
       }
 
       div.list {
         overflow: auto;
-        height: 270px;
+        padding: 10px 0px 10px 0px;
+        min-height: 32%;
       }
 
       div.detail {
-        height: 280px;
-        width: 100%;
-        border-top: 1px solid #666;
+          flex-grow: 1;
+          display: flex;
+          align-content: flex-start;
+          width: 100%;
+          position: absolute;
+          bottom: 0;
       }
 
       div.detail-text {
-        height: 100%;
-        width: 450px;
+        width: 55%;
         float: left;
-        border-right: 1px solid #666;
         overflow: auto;
+        background-color: #e0e0e0;
         padding: 8px;
         font-size: 8pt;
+        flex-grow: 1;
       }
 
       div.detail-text table {
@@ -57,31 +71,73 @@
         vertical-align: top;
       }
 
+      div.div-detail-desc {
+          margin: 20px;
+          width: 100%;
+      }
+
       div.detail-image {
-        height: 270px;
-        width: 300px;
         float: left;
-        padding: 8px;
+        background-color: #656565;
+        color: #fff;
+        width: 45%;
         overflow: auto;
+        /*display: flex;*/
+        flex-direction: column;
+        align-items: center;
+      }
+
+      div.detail-image > div.detail-image-src {
+          width: 100%;
+          background: black;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
       }
 
       img.detail-image {
-        max-height: 100%;
-        max-width: 100%;
+        max-width: 90%;
+        max-height: 200px;
         border: none;
-        margin: 5px;
       }
 
       div#load_page_start {
         display: inline-block;
-        margin-right: 20px;
+        margin-right: 15px;
+        font-family: 'trebuchet ms', arial;
+        text-transform: uppercase;
       }
 
-      div#div-detail-desc td {
-        vertical-align: top;
+      #div-detail-desc {
+          width:95%;
+          font-family: Arial, sans-serif !important;
+          font-size:11px;
+          margin: auto;
+          text-transform: uppercase;
+          padding-top: 20px;
+          padding-bottom: 20px;
       }
-      div#div-detail-desc strong {
-        text-transform: uppercase;
+
+      #div-detail-desc a {
+          color: white;
+      }
+
+      #div-detail-desc strong {
+          font-weight: 100;
+      }
+
+      #div-detail-desc .desc td:last-child{
+          overflow: scroll;
+      }
+
+      #div-detail-desc .desc td:first-child{
+          width: 45%;
+          vertical-align: top;
+      }
+
+      #div-detail-desc h4 {
+          padding-top: 20px;
+          padding-bottom: 5px;
       }
 
       div.timer {
@@ -102,13 +158,13 @@
       }
 
       div.header-left, div.header-right {
-        width: 49%;
+        width: 47%;
         display: inline-block;
-        margin: 5px 10px 10px 10px;
+        margin: 15px 10px 7px 10px;
       }
 
       div.header-right {
-        height: 100%;
+        height: auto;
         text-align: right;
       }
 
@@ -127,17 +183,26 @@
       }
 
       div.perf-bar > span {
-        line-height: 2em;
+        line-height: 3em;
         display: inline-block;
-        padding-left: 10px;
+        padding-left: 20px;
         cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: .10em;
       }
 
       div.perf-bar >span:first-child {
         background-color: #4ecb35;
-        text-transform: capitalize;;
         color: #000000;
         width: 75%;
+      }
+
+      div.perf-bar>div.perf-bar-child-select {
+          border-right: solid thin;
+          display: inline-block;
+          width: 50px;
+          height: 3em;
+          vertical-align: top;
       }
 
 
@@ -156,11 +221,12 @@
     <div class="main-content">
         <div id="div-header" class="header">
             <div class="header-left">
-                <h1>DOWN THE RABBIT HOLE</h1>
+                <h1><img src="icon128.png" id="rabbithole-icon"/>rabbithole</h1>
+                <!-- <img src="icon128.png" id="rabbithole-icon"/> -->
             </div>
             <div class="header-right">
               <div id="load_page_start" ></div>
-              <a href="#" class="icon-settings" style="font-size: 32px;" id="go-to-options"></a>
+              <a href="#" class="icon-settings" style="font-size: 32px;position: absolute; top: -10px; right: 5px;" id="go-to-options"></a>
                 <!-- <div>
                     <strong>Select an ad unit:</strong> <span id="span-sel"></span>
                 </div> -->
@@ -173,7 +239,7 @@
             <div id="div-detail-text" class="detail-text">
             </div>
             <div id="div-detail-image" class="detail-image">
-                <img id="img-detail-image" class="detail-image" src="1x1.png" />
+                <div class="detail-image-src"><img id="img-detail-image" class="detail-image" src="1x1.png" /></div>
                 <div id="div-detail-desc">
                 </div>
             </div>

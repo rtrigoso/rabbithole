@@ -19,7 +19,7 @@
   ],
 
   "browser_action": {
-    "default_title": "rabbithole: dig deep into ad units"
+    "default_title": "Go down the rabbit hole to inspect ads"
   },
 
   "icons": {
@@ -32,12 +32,12 @@
     "scripts": ["background.js"]
   },
 
-  "content_scripts": [{
+  "content_scripts": [ {
     "all_frames": true,
     "js": [ "content.js" ],
     "match_about_blank": true,
     "matches": [ "\u003Call_urls>" ],
-    "run_at": "document_idle"
+    "run_at": "document_end"
   }],
 
   "web_accessible_resources": [ "getFrameId" ]
