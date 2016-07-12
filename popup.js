@@ -520,7 +520,6 @@ function rh_popup ()
                 markup += "<tr><td><strong>backgroundImage:</strong></td><td>" + o.background_image + "</td></tr>\n";
                 var bg = o.background_image;
                 bg = bg.replace (/^url\("(.*)"\)$/, '$1');
-                // bg = bg.substring(bg.indexOf("images") > -1 ? bg.indexOf("images") : 0);
                 img_src = bg;
             }
 
